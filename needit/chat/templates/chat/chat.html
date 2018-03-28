@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<title>Dialog</title>
+<script src='//production-assets.codepen.io/assets/editor/live/console_runner-079c09a0e3b9ff743e39ee2d5637b9216b3545af0de366d4b9aad9dc87e26bfd.js'></script><script src='//production-assets.codepen.io/assets/editor/live/events_runner-73716630c22bbc8cff4bd0f07b135f00a0bdc5d14629260c3ec49e5606f98fdd.js'></script><script src='//production-assets.codepen.io/assets/editor/live/css_live_reload_init-2c0dc5167d60a5af3ee189d570b1835129687ea2a61bee3513dee3a50c115a77.js'></script><meta charset='UTF-8'><meta name="robots" content="noindex"><link rel="shortcut icon" type="image/x-icon" href="//production-assets.codepen.io/assets/favicon/favicon-8ea04875e70c4b0bb41da869e81236e54394d63638a1ef12fa558a4a835f1164.ico" /><link rel="mask-icon" type="" href="//production-assets.codepen.io/assets/favicon/logo-pin-f2d2b6d2c61838f7e76325261b7195c27224080bc099486ddd6dccb469b8e8e6.svg" color="#111" /><link rel="canonical" href="https://codepen.io/emilcarlsson/pen/ZOQZaV?limit=all&page=74&q=contact+" />
+<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+
+<script src="https://use.typekit.net/hoy3lrg.js"></script>
+<script>try{Typekit.load({ async: true });}catch(e){}</script>
+<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'><link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+
+{% endblock %}
+{% block body %}
+<div class="container">
+	
+	<div class="col-md-8">
+		<h1>Dialog with {{ interlocutor.get_full_name }}</h1>
+		<div class="panel-body">
+			<ul class="chat">
+				{% for message in messages %}
+					{% if message.sender_user == interlocutor %}
+						<li class="left clearfix"><span class="chat-img pull-left">
+							<img src="
+							{% if interlocutor.userprofille.image %}
+								{{ interlocutor.userprofille.image }}
+							{% else %}
+								http://placehold.it/50/55C1E7/fff&text=U
+							{% endif %}" alt="User Avatar" class="img-circle" width="70" height="70">
+						</span>
+							<div class="chat-body clearfix">
+								<div class="header">
+									<a href="{% url 'accounts:view_profile_with_pk' pk=interlocutor.pk %}"><strong class="primary-font">{{ interlocutor.get_full_name }}</strong></a> 
+									<small class="pull-right text-muted">
+                  	<span class="glyphicon glyphicon-time"></span>
+                  	{{ message.created|timesince }} ago
+                  </small>
+								</div>
+								<p>
+									{{ message.content }}
+									{% if interlocutor.userprofille.image %}
+										{{ interlocutor.userprofille.image.url }}
+									{% endif %}
+								</p>
+							</div>
+						</li>
+					{% else %}
+						<li class="right clearfix"><span class="chat-img pull-right">
+	            <img src="
+							{% if myself.userprofille.image %}
+								{{ myself.userprofille.image.url }}
+							{% else %}
+								http://placehold.it/50/FA6F57/fff&text=ME
+							{% endif %}" alt="User Avatar" class="img-circle" width="70" height="70">
+	          </span>
+              <div class="chat-body clearfix">
+                <div class="header">
+	                <small class=" text-muted">
+	                	<span class="glyphicon glyphicon-time"></span>
+	                	{{ message.created|timesince }} ago
+	                </small>
+	                <a href="{% url 'accounts:view_profile' %}"><strong class="pull-right primary-font">{{ myself.get_full_name }}</strong></a>
+                </div>
+                <p>
+                  {{ message.content }}
+                </p>
+              </div>
+	          </li>
+					{% endif %}
+				{% endfor %}	
+			</ul>
+		</div>
+    <!-- <form method="post">
+      {% csrf_token %}
+      {{ form.content }}
+      <br>
+      <span class="input-group-btn">
+          <button type="submit" class="btn btn-warning btn-sm" id="btn-chat">
+              Send
+          </button>
+      </span>
+    </form> -->
+    <input id="chat-message-input" type="text" size="100"/><br/>
+    <input id="chat-message-submit" type="button" value="Send"/>
+    <!-- <input type="text" name="content" class="form-control" placeholder="Write a message..." required="" id="id_content">
+    <br>
+    <span class="input-group-btn">
+      <button type="submit" class="btn btn-warning btn-sm" id="btn-chat">
+        Send
+      </button>
+    </span>
+    <div class="message-input">
+      <div class="wrap">
+        <input type="text" placeholder="Write your message...">
+        <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
+        <button class="submit">
+          <i class="fa fa-paper-plane" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div> -->
+	</div>
+
+<!-- 	<textarea id="chat-log" cols="100" rows="20"></textarea><br/>
+	<input id="chat-message-input" type="text" size="100"/><br/>
+  <input id="chat-message-submit" type="button" value="Send"/> -->
+</div>
+<script>
+    var roomName = {{ room_name_json }};
+
+    var chatSocket = new WebSocket(
+        'ws://' + window.location.host +
+        '/ws/chat/' + roomName + '/');
+
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        var pk = data['pk'];
+        var msg_date = data['msg_date'];
+        // document.querySelector('.chat-body').value += (message + '\n');
+        if (pk=={{myself.id}}){
+          var msg_in_html = `<li class="right clearfix"><span class="chat-img pull-right"><img src="`;
+          {% if myself.userprofille.image %}
+            msg_in_html += '{{ myself.userprofille.image.url }}';
+          {% else %}
+            msg_in_html += 'http://placehold.it/50/FA6F57/fff&text=ME';
+          {% endif %}
+          msg_in_html += `" alt="User Avatar" class="img-circle" width="70" height="70">`;
+          msg_in_html += `</span><div class="chat-body clearfix"><div class="header">`;
+          msg_in_html += `<small class=" text-muted"><span class="glyphicon glyphicon-time"></span>`;
+          msg_in_html += msg_date;
+          msg_in_html += `</small><a href="{% url 'accounts:view_profile' %}"><strong class="pull-right primary-font">`
+          msg_in_html += '{{ myself.get_full_name }}'+`</strong></a>`;
+          msg_in_html += `</div><p>`;
+          msg_in_html += message;
+          msg_in_html += `</p></div></li>`;
+        } else {
+          var msg_in_html = `<li class="left clearfix"><span class="chat-img pull-left"><img src="`;
+          {% if interlocutor.userprofille.image %}
+            msg_in_html += '{{ interlocutor.userprofille.image.url }}';
+          {% else %}
+            msg_in_html += 'http://placehold.it/50/55C1E7/fff&text=U';
+          {% endif %}
+          msg_in_html += `" alt="User Avatar" class="img-circle" width="70" height="70">`;
+          msg_in_html += `</span><div class="chat-body clearfix"><div class="header">`;
+          msg_in_html += `<a href="{% url 'accounts:view_profile_with_pk' pk=interlocutor.pk %}">`;
+          msg_in_html += `<strong class="primary-font">`+'{{ interlocutor.get_full_name }}'+`</strong></a>`;
+          msg_in_html += `<small class="pull-right text-muted"><span class="glyphicon glyphicon-time"></span>`
+          msg_in_html += msg_date;
+          msg_in_html += `</small></div><p>`;
+          msg_in_html += message;
+          msg_in_html += `</p></div></li>`;
+        };
+        $('.chat').append(msg_in_html);
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        var messageInputDom = document.querySelector('#chat-message-input');
+        var message = messageInputDom.value;
+        if (message != '') {
+          chatSocket.send(JSON.stringify({
+            'pk': {{ myself.id }},
+            'message': message
+            
+          }));
+        };
+        
+
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %}
